@@ -1,0 +1,395 @@
+package g6_uniformschedule;
+
+import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.regex.Pattern;
+import java.time.LocalDate;
+import java.time.LocalTime; 
+import java.time.DayOfWeek;
+import java.time.temporal.TemporalAdjusters;
+import java.time.format.DateTimeFormatter;
+
+public class G6_UniformSchedule {
+
+    public static void main(String[] args) {
+        Scanner us = new Scanner(System.in);
+        // mga data storages
+        ArrayList<String> usernames = new ArrayList<>(); //gina store niya mga REGISTERED student emails
+        HashMap<String, String> schedules = new HashMap<>(); // map username dayun iyang booked schedule
+        ArrayList<String> available = new ArrayList<>();//list sa available time slots
+        HashMap<String, Integer> slots = new HashMap<>(); //map time slot dayun iyang reamaining capacity
+        //initialize ta here schedule slots
+        available.add("Monday 8:00 AM - 12:00 PM");
+        available.add("Monday 1:00 PM - 5:00 PM");
+        available.add("Tuesday 8:00 AM - 12:00 PM");
+        available.add("Tuesday 1:00 PM - 5:00 PM");
+        available.add("Wednesday 8:00 AM - 12:00 PM");
+        available.add("Wednesday 1:00 PM - 5:00 PM");
+        available.add("Thursday 8:00 AM - 12:00 PM");
+        available.add("Thursday 1:00 PM - 5:00 PM");
+        available.add("Friday 8:00 AM - 12:00 PM");
+        available.add("Friday 1:00 PM - 5:00 PM");
+        available.add("Saturday 8:00 AM - 12:00 PM");
+        //set initial capacity for each slot
+        for (String slot : available) {
+            slots.put(slot, 30);
+        }
+        //validation
+        final String staffuser = "staff123";
+        final String staffpass = "staff123";
+        final String PHINMAED_EMAIL_PATTERN = "^[a-zA-Z][a-zA-Z0-9._-]*\\.[a-zA-Z][a-zA-Z0-9._-]*\\.[a-zA-Z][a-zA-Z0-9._-]*@phinmaed\\.com$";
+        //prevents non-integer na input
+        java.util.function.Function<String, Integer> safeNextInt = (prompt) -> {
+            int number = 0;
+            while (true) {
+                System.out.print(prompt);
+                if (us.hasNextInt()) {
+                    number = us.nextInt();
+                    us.nextLine();
+                    return number;
+                } else {
+                    System.out.println("Invalid choice! Please enter a NUMBER only (1, 2, 3 etc.)");
+                    us.nextLine();
+                }
+            }
+        };
+        //reset all slots count if monday
+        java.util.function.BiConsumer<HashMap<String, Integer>, ArrayList<String>> resetSlotsIfMonday = (slotsMap, avail) -> {
+            LocalDate today = LocalDate.now();
+            if (today.getDayOfWeek() == DayOfWeek.MONDAY) {
+                for (String slot : avail) {
+                    slotsMap.put(slot, 30);
+                }
+            }
+        };
+
+        System.out.println("=============================================");
+        System.out.println(" WELCOME TO SCHOOL UNIFORM SCHEDULING SYSTEM ");
+        System.out.println("=============================================");
+        //Main system loop
+        while (true) {
+            resetSlotsIfMonday.accept(slots, available);
+            System.out.println("");
+            System.out.println("--- MAIN DASHBOARD ---");
+            System.out.println("1.Staff");
+            System.out.println("2.Student");
+            System.out.println("3.Exit");
+            int choice = safeNextInt.apply("Select Choice (1-3): ");
+            System.out.println("");
+
+
+            if (choice == 1) { 
+                System.out.println("");
+                System.out.println("----- WELCOME STAFF -----");
+
+                while (true) {
+                    System.out.println("Enter Username: ");
+                    String username = us.nextLine();
+
+                    System.out.println("Enter Password: ");
+                    String pass = us.nextLine();
+
+                    if (username.equals(staffuser) && pass.equals(staffpass)) {
+                        System.out.println("--- LOGIN SUCCESSFULLY ---");
+                        break;
+                    } else {
+                        System.out.println("Access Denied, Incorrect Admin Credentials. Try Again!");
+                    }
+                }
+                while (true) {
+                    System.out.println("");
+                    System.out.println("--- STAFF DASHBOARD ---");
+                    System.out.println("1.View all student account and schedule");
+                    System.out.println("2.Update Student Schedule Status");
+                    System.out.println("3.Logout");
+                    int choices = safeNextInt.apply("Select choice (1-3): ");
+                    System.out.println("");
+
+                    if (choices == 1) { //view all student and schedules
+                        System.out.println("- Display all student account and schedule -");
+                        if (schedules.isEmpty()) {
+                            System.out.println("No Records Found");
+                        } else {
+                            schedules.forEach((user, sched) -> System.out.println("Student: " + user + " | Schedule: " + sched));
+                        }
+                    } else if (choices == 2) { //update status 
+                        System.out.println("");
+                        System.out.println("--- Update Student Schedule Status ---");
+                        System.out.print("Enter Student Username: ");
+                        String stname = us.nextLine();
+                        while (true){
+                        if (schedules.containsKey(stname)) {
+                            System.out.println("Current Schedule: " + schedules.get(stname));
+                            System.out.println("1. Mark as CLAIMED");
+                            System.out.println("2. Mark as UNCLAIMED");
+                            int action =safeNextInt.apply("Select action (1-2): ");
+                            
+                            String currentSched = schedules.get(stname).split(" - ")[0];
+                            if (action == 1) {
+                                schedules.put(stname, currentSched + " STATUS: CLAIMED ");
+                                System.out.println("Updated to CLAIMED.");
+                                break;
+                            } else if (action == 2) {
+                                schedules.put(stname, currentSched + " STATUS: UNCLAIMED ");
+                                System.out.println("Updated to UNCLAIMED.");
+                                break;
+                            }
+                            System.out.println("Invalid input! You must choose an action from 1-2 only.");
+                            System.out.println("Please try again!");
+                        } else {
+                            System.out.println("No Schedule found.");
+                            break; 
+                        }
+                        }
+ 
+                    } else if (choices == 3) { //logout
+                        System.out.println("Logout Sucessfully!");
+                        break;
+                    } else {
+                        System.out.println("Invalid Choice. Try Again");
+                    }
+                }
+
+            } else if (choice == 2) {
+                System.out.println("----- WELCOME STUDENT -----");
+                String login = ""; //track who's currently naka login
+                while (true) {
+                    System.out.println("");
+                    System.out.println("--- STUDENT DASHBOARD ---");
+                    System.out.println("1.Register");
+                    System.out.println("2.Log-in");
+                    System.out.println("3.Back to Main Dashboard");
+                    int pili = safeNextInt.apply("Select choice (1-3): ");
+                    System.out.println("");
+
+
+                    if (pili == 1) { //student registration
+                        while (true) {
+                            System.out.println("Enter PHINMA-ED Email: ");
+                            String usn = us.nextLine();
+
+                            System.out.println("Enter Password: ");
+                            String password = us.nextLine();
+
+                            if (usernames.contains(usn)) {
+                                System.out.println("Email already registered. Please login or use a different email.");
+                                continue;
+                            }
+                            //validate email n password
+                            if (Pattern.matches(PHINMAED_EMAIL_PATTERN, usn)) {
+                                if (password.matches(".{6,}")) {
+                                    usernames.add(usn);
+                                    System.out.println("Registered Successfully! You can now log-in.");
+                                    break;
+                                } else {
+                                    System.out.println("Password must be at least 6 characters long.");
+                                }
+                            } else {
+                                System.out.println("Invalid Email format!");
+                                System.out.println("Please use format: firstname.lastname.coc@phinmaed.com");
+                            }
+                        }
+                    } else if (pili == 2) { // student login
+                        System.out.println("Enter PHINMA-ED Email: ");
+                        String usern = us.nextLine();
+
+                        System.out.println("Enter Password: ");
+                        String passw = us.nextLine();
+
+                        if (usernames.contains(usern)) {
+                            if (passw.matches(".{6,}")) {
+                                login = usern;
+                                System.out.println("--- Log-in Successfully ---");
+
+                                while (true) {
+                                    System.out.println("");
+                                    System.out.println("---  REGISTERED STUDENT DASHBOARD ---");
+                                    System.out.println("1.View Schedule");
+                                    System.out.println("2.Book Schedule");
+                                    System.out.println("3.Cancel Schedule");
+                                    System.out.println("4.View Available Slot");
+                                    System.out.println("5.Logout");
+                                    int asa = safeNextInt.apply("Select choice (1-5): ");
+                                    System.out.println("");
+
+
+                                    if (asa == 1) { //view own schedules
+                                        if (schedules.containsKey(login)) {
+                                            System.out.println("===========================================");
+                                            System.out.println("YOUR CURRENT SCHEDULE: " + schedules.get(login));
+                                            System.out.println("===========================================");
+                                        } else {
+                                            System.out.println("No schedule found. Please book first.");
+                                        }
+                                    } else if (asa == 2) { //book schedule
+                                        if (schedules.containsKey(login)) {
+                                            System.out.println("NOTICE: You already have an existing booking.");
+                                            System.out.println("Current Schedule: " + schedules.get(login));
+                                        } else {
+
+                                            while (true) {
+                                                System.out.println("--- AVAILABLE SLOTS ONLY ---");
+                                                boolean hasAvailable = false;
+                                                for (int i = 0; i < available.size(); i++) {
+                                                    String slot = available.get(i);
+                                                    int remaining = slots.get(slot);
+                                                    if (remaining > 0) {
+                                                        System.out.println((i + 1) + ". " + slot + " (" + remaining + "/30 available)");
+                                                        hasAvailable = true;
+                                                    }
+                                                }
+
+                                                if (!hasAvailable) {
+                                                    System.out.println(" ALL SLOTS FULL! Wait for Monday reset.");
+                                                    break;
+                                                }
+
+                                                int slotchoice = safeNextInt.apply("Select slot (number): ");
+
+                                                if (slotchoice > 0 && slotchoice <= available.size()) {
+                                                    String selectedslot = available.get(slotchoice - 1);
+                                                    int remainingslots = slots.get(selectedslot);
+                                                    // time validation, to prevent booking past slots
+                                                    LocalDate today = LocalDate.now();
+                                                    LocalTime currentTime = LocalTime.now();
+                                                    String selectedDayName = selectedslot.split(" ")[0];
+                                                    
+                                                    String startTimeStr = selectedslot.split(" ")[1] + " " + selectedslot.split(" ")[2];
+                                                    DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("h:mm a");
+                                                    LocalTime selectedStartTime = LocalTime.parse(startTimeStr, timeFormatter);
+
+                                                    DayOfWeek targetDay = switch (selectedDayName) {
+                                                        case "Monday" -> DayOfWeek.MONDAY;
+                                                        case "Tuesday" -> DayOfWeek.TUESDAY;
+                                                        case "Wednesday" -> DayOfWeek.WEDNESDAY;
+                                                        case "Thursday" -> DayOfWeek.THURSDAY;
+                                                        case "Friday" -> DayOfWeek.FRIDAY;
+                                                        case "Saturday" -> DayOfWeek.SATURDAY;
+                                                        default -> DayOfWeek.MONDAY;
+                                                    };
+                                                    //check if the day is in the past or like it today, the time has passed
+                                                    if (targetDay.getValue() < today.getDayOfWeek().getValue() || 
+                                                       (targetDay == today.getDayOfWeek() && currentTime.isAfter(selectedStartTime))) {
+                                                        System.out.println("===========================================");
+                                                        System.out.println("This time slot has already passed");
+                                                        System.out.println("Please select a different schedule");
+                                                        System.out.println("===========================================");
+                                                        continue; 
+                                                    }
+                                                    
+                                                    if (remainingslots > 0) {
+                                                        LocalDate finalBookingDate;
+                                                        if (targetDay.getValue() < today.getDayOfWeek().getValue()) {
+                                                            finalBookingDate = today.with(TemporalAdjusters.next(targetDay));
+                                                        } else {
+                                                            finalBookingDate = today.with(TemporalAdjusters.nextOrSame(targetDay));
+                                                        }
+
+                                                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM dd, yyyy");
+                                                        String formattedDate = finalBookingDate.format(formatter);
+
+                                                        String scheduleWithDate = formattedDate + " " + selectedslot;
+                                                        schedules.put(login, scheduleWithDate);
+                                                        slots.put(selectedslot, remainingslots - 1);
+
+                                                        System.out.println("=============================================");
+                                                        System.out.println("         SUCCESSFULLY BOOKED!");
+                                                        System.out.println("=============================================");
+                                                        System.out.println("Name:            " + login);
+                                                        System.out.println("Full Schedule:   " + scheduleWithDate);
+                                                        System.out.println("Status:          UNCLAIM");
+                                                        System.out.println("===========================================");
+                                                        break;
+                                                    } else {
+                                                        System.out.println(" Slot is FULL!");
+                                                    }
+                                                } else {
+                                                    System.out.println("Invalid choice!");
+                                                }
+                                            }
+                                        }
+                                    } else if (asa == 3) { //cancel schedule
+                                    if (schedules.containsKey(login)) {
+                                    while (true) { 
+                                       System.out.println("");
+                                       System.out.print("Are you sure you want to cancel? (yes/no): ");
+            
+                                    if (us.hasNextInt()) {
+                                       System.out.println("");
+                                       System.out.println("Invalid input! Please type 'yes' or 'no', not a number.");
+                                       us.nextLine(); 
+                                    } else {
+                                        String confirmation = us.next();
+                                        us.nextLine(); 
+
+                                    if (confirmation.equalsIgnoreCase("yes")) {
+                                    String fullStoredSched = schedules.get(login);
+                                    String originalSlotName = "";
+                                    for (String s : available) {
+                                       if (fullStoredSched.contains(s)) {
+                                       originalSlotName = s;
+                                       break;
+                                       }
+                                    }
+                                    if (!originalSlotName.isEmpty()) {
+                                    slots.put(originalSlotName, slots.get(originalSlotName) + 1);
+                                    }
+                                    schedules.remove(login);
+                                       System.out.println("Schedule canceled successfully!");
+                                       break; 
+                                    } else if (confirmation.equalsIgnoreCase("no")) {
+                                       System.out.println("Cancellation Aborted.");
+                                       break; 
+                                    } else {
+                                       System.out.println("Invalid input! Please type 'yes' or 'no'.");
+                                    }
+                                    }
+                                    }
+                                    } else {
+                                        System.out.println("Nothing to cancel.");
+                                    }
+
+                                    } else if (asa == 4) { //view slots
+                                        System.out.println("");
+                                        System.out.println("--- ALL SLOTS STATUS ---");
+                                        for (int i = 0; i < available.size(); i++) {
+                                            String slot = available.get(i);
+                                            System.out.println((i + 1) + ". " + slot + " (" + slots.get(slot) + "/30 available)");
+                                        }
+                                        
+                                        System.out.println("");
+                                        System.out.println("--- NOTICE ---");
+                                        System.out.println("ALL SLOTS RESET: Mon-Sat (30 slots each) for new week!");
+                                        
+                                    } else if (asa == 5) {
+                                        System.out.println("Logged out successfully!");
+                                        login = "";
+                                        break;
+                                    } else {
+                                        System.out.println("Invalid Choice. Try Again");
+                                    }
+                                }
+                            } else {
+                                System.out.println(" Password must be at least 6 characters long.");
+                            }
+                        } else {
+                            System.out.println(" Email not found! Please register first.");
+                        }
+                    } else if (pili == 3) {
+                        System.out.println("Going back to the Main Dashboard....");
+                        break;
+                    } else {
+                        System.out.println("Invalid Choice. Try Again");
+                    }
+                }
+            } else if (choice == 3) {
+                System.out.println("Thank you for using our System!");
+                break;
+            } else {
+                System.out.println("Invalid Choice. Try Again!");
+            }
+        }
+        us.close();
+    }
+}    
